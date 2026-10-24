@@ -1,0 +1,22 @@
+import os
+application = defines['app']
+files = [application]
+symlinks = {'Applications': '/Applications'}
+format = 'UDZO'
+filesystem = 'HFS+'
+background = defines['background']
+icon = os.path.join(application, 'Contents', 'Resources', 'AppIconZ.icns')
+window_rect = ((240, 160), (660, 440))
+icon_locations = {os.path.basename(application): (180, 210), 'Applications': (480, 210)}
+icon_size = 128
+text_size = 13
+show_status_bar = False
+show_tab_view = False
+show_toolbar = False
+show_pathbar = False
+show_sidebar = False
+show_icon_preview = False
+include_icon_view_settings = True
+include_list_view_settings = False
+default_view = 'icon-view'
+arrange_by = None
