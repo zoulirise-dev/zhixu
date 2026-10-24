@@ -6,7 +6,7 @@
 
 ## 下载
 
-[下载 macOS Apple Silicon 版](https://github.com/zoulirise-bit/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) · [GitHub 发行版](https://github.com/zoulirise-bit/zhixu/releases) · [Gitee 发行版](https://gitee.com/zoulirise/zhixu/releases)
+[下载 macOS Apple Silicon 版](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) · [GitHub 发行版](https://github.com/zoulirise-dev/zhixu/releases) · [Gitee 发行版](https://gitee.com/zoulirise/zhixu/releases)
 
 要求 macOS 14 或以上、Apple 芯片（M 系列）。下载 DMG 后将枝序拖入 Applications。Windows 版正在规划，尚无安装包。对应版本 Release 发布后下载入口生效。
 
@@ -81,7 +81,7 @@ docs/          使用、架构和发布说明
 scripts/       根目录构建和测试入口
 ```
 
-两端按目录划分，采用同一主分支维护。[GitHub](https://github.com/zoulirise-bit/zhixu) 是主仓库，[Gitee](https://gitee.com/zoulirise/zhixu) 同步提供源码与发行版。平台进度和版本可以独立推进，详见 [架构与平台规划](docs/architecture.md)。
+两端按目录划分，采用同一主分支维护。[GitHub](https://github.com/zoulirise-dev/zhixu) 是主仓库，[Gitee](https://gitee.com/zoulirise/zhixu) 同步提供源码与发行版。平台进度和版本可以独立推进，详见 [架构与平台规划](docs/architecture.md)。
 
 ## 测试
 
