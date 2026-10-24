@@ -6,9 +6,25 @@
 
 ## 下载
 
-[下载 macOS Apple Silicon 版](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) · [GitHub 发行版](https://github.com/zoulirise-dev/zhixu/releases) · [Gitee 发行版](https://gitee.com/zoulirise/zhixu/releases)
+### macOS · M 系列芯片
 
-要求 macOS 14 或以上、Apple 芯片（M 系列）。下载 DMG 后将枝序拖入 Applications。Windows 版正在规划，尚无安装包。对应版本 Release 发布后下载入口生效。
+**已上线 · v1.0.2**｜适用于 macOS 14 及以上、Apple Silicon（M 系列）芯片，暂不支持 Intel Mac。
+
+| Gitee 下载 | GitHub 下载 |
+| --- | --- |
+| [下载 macOS 安装包（DMG）](https://gitee.com/zoulirise/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) | [下载 macOS 安装包（DMG）](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) |
+
+安装方式：打开 DMG，将“枝序”拖入 Applications（应用程序）。
+
+### Windows
+
+**暂未上线**，目前暂无 Windows 安装包。
+
+| Gitee 下载 | GitHub 下载 |
+| --- | --- |
+| 暂未上线 | 暂未上线 |
+
+历史版本与更新说明：[Gitee 发行版](https://gitee.com/zoulirise/zhixu/releases) · [GitHub 发行版](https://github.com/zoulirise-dev/zhixu/releases)
 
 ## 少记命令，把注意力放在代码上
 
@@ -39,7 +55,7 @@
 | macOS | 已实现，版本 1.0.2 | macOS 14+，Apple Silicon，系统可用 Git |
 | Windows | 计划中，尚无实现或安装包 | 技术方案与最低系统要求待确定 |
 
-macOS 使用 SwiftUI/AppKit，不依赖 Node 或 Electron。Windows 计划提供相同的主要工作流程，但不会直接运行 macOS 界面代码。安装包通过 GitHub Releases 提供，源码构建方法见下文。
+macOS 使用 SwiftUI/AppKit，不依赖 Node 或 Electron。Windows 计划提供相同的主要工作流程，但不会直接运行 macOS 界面代码。安装包通过 Gitee 和 GitHub 的发行版提供，源码构建方法见下文。
 
 ## 功能
 
