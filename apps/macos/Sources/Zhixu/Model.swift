@@ -3,20 +3,13 @@ import AppKit
 
 @MainActor final class Workspace: ObservableObject {
     @Published var projects: [Project] = []
-    @Published var authorProfiles: [GitAuthorProfile] = []
     @Published var currentAuthorName = ""
     @Published var currentAuthorEmail = ""
     func reloadAuthors() async throws {
-        guard let root = project?.path else { authorProfiles = []; currentAuthorName = ""; currentAuthorEmail = ""; return }
-        let profiles = try await GitAuthorProfile.read(root)
-        let name = ((try? await Git.run(root, ["config", "user.name"])) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        let email = ((try? await Git.run(root, ["config", "user.email"])) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let root = project?.path else { currentAuthorName = ""; currentAuthorEmail = ""; return }
+        let author = await GitCommitAuthor.read(root)
         guard project?.path == root else { return }
-        authorProfiles = profiles; currentAuthorName = name; currentAuthorEmail = email
-    }
-    func useAuthor(_ profile: GitAuthorProfile) {
-        guard let root = project?.path else { return }
-        perform { try await profile.activate(root); try await self.reloadAuthors() }
+        currentAuthorName = author.name; currentAuthorEmail = author.email
     }
 
     @Published var project: Project?

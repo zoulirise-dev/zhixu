@@ -19,8 +19,8 @@ struct WorkspaceSettings: View {
     @State private var editingRemote = ""
     @State private var newRemoteName = ""
     @State private var newRemoteURL = ""
-    @State private var profileName = ""
-    @State private var profileEmail = ""
+    @State private var authorName = ""
+    @State private var authorEmail = ""
     @State private var remoteError = ""
     @State private var remoteSaved = false
     @State private var loaded = false
@@ -63,6 +63,14 @@ struct WorkspaceSettings: View {
                 if let project = model.project {
                     VStack(alignment: .leading, spacing: 10) {
                         Text(L("项目 · {0}", [String(describing: project.name)])).font(.headline)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(L("本项目提交署名")).font(.system(size: 12, weight: .medium))
+                            field(L("提交者姓名"), value: $authorName)
+                            field(L("提交者邮箱"), value: $authorEmail)
+                            Text(L("默认读取电脑的 Git 配置；保存后仅用于本项目的新提交，与推送目标和登录账号无关，不修改已有提交。"))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }.padding(14).background(Color(nsColor: AppTheme.subtle), in: RoundedRectangle(cornerRadius: 10))
+                            .disabled(!loaded || model.busy)
                         Button(L("新增远程仓库")) { editingRemote = "add"; newRemoteName = ""; newRemoteURL = "" }
                             .buttonStyle(CompactThemeButtonStyle()).disabled(!loaded || model.busy)
                         if editingRemote == "add" { remoteEditForm.disabled(model.busy) }
@@ -94,7 +102,7 @@ struct WorkspaceSettings: View {
                     Spacer()
                     if model.project != nil {
                         Button(L("保存项目设置")) { saveSettings() }
-                            .buttonStyle(DialogButtonStyle(primary: true)).disabled(!loaded || model.busy || profileName.isEmpty || profileEmail.isEmpty)
+                            .buttonStyle(DialogButtonStyle(primary: true)).disabled(!loaded || model.busy || authorName.isEmpty || authorEmail.isEmpty)
                     } else { Button(L("关闭"), action: close).buttonStyle(DialogButtonStyle()) }
                 }.frame(height: 40)
             }.frame(width: 500).frame(height: min(760, geometry.size.height - 100))
@@ -121,7 +129,6 @@ struct WorkspaceSettings: View {
                                 originalRemote = item.url
                                 remote = remoteDrafts[item.name] ?? item.url
                                 choosingRemote = false
-                                loadProfile()
                             } label: {
                                 HStack {
                                     Text(item.name).lineLimit(1)
@@ -137,10 +144,6 @@ struct WorkspaceSettings: View {
         }
     }
     private var selectedEntry: GitSettingsRemote.Entry? { remotes.first { $0.name == remoteName } }
-    private func loadProfile() {
-        let profile = model.authorProfiles.first { $0.remote == remoteName }
-        profileName = profile?.name ?? gitName; profileEmail = profile?.email ?? gitEmail
-    }
     private func remoteAction(_ action: @escaping (String) async throws -> String?) {
         guard let root = model.project?.path else { return }
         remoteError = ""; remoteSaved = false
@@ -154,24 +157,19 @@ struct WorkspaceSettings: View {
                 if let entry = entries.first(where: { $0.name == (selection ?? remoteName) }) ?? entries.first {
                     remoteName = entry.name; remote = entry.url; originalRemote = entry.url
                 } else { remoteName = "origin"; remote = ""; originalRemote = "" }
-                remoteDrafts = [:]; choosingRemote = false; editingRemote = ""; loadProfile(); remoteSaved = true
+                remoteDrafts = [:]; choosingRemote = false; editingRemote = ""; remoteSaved = true
             } catch { remoteError = error.localizedDescription }
         }
     }
     private func saveSettings() {
         guard let root = model.project?.path else { return }
-        let author = profileName, mail = profileEmail, address = remote, selected = remoteName
+        let author = authorName, mail = authorEmail, address = remote, selected = remoteName
         remoteError = ""
         model.perform {
             do {
-                try GitAuthorProfile.validate(name: author, email: mail)
+                try GitCommitAuthor.validate(name: author, email: mail)
                 try await GitSettingsRemote.save(root, name: selected, url: address)
-                if let entry = try await GitSettingsRemote.list(root).first(where: { $0.name == selected }) {
-                    try await GitAuthorProfile.save(root, entry: entry, name: author, email: mail)
-                } else {
-                    _ = try await Git.run(root, ["config", "--local", "user.name", author])
-                    _ = try await Git.run(root, ["config", "--local", "user.email", mail])
-                }
+                try await GitCommitAuthor.save(root, name: author, email: mail)
                 try await model.refresh()
                 close()
             } catch { remoteError = error.localizedDescription }
@@ -201,19 +199,12 @@ struct WorkspaceSettings: View {
                 Button(L("重命名")) { editingRemote = "rename"; newRemoteName = remoteName }.disabled(selectedEntry == nil)
                 Button(L("移除")) {
                     guard let entry = selectedEntry else { return }
-                    if AppDialogs.confirm(L("移除远程仓库？"), message: L("仅移除本项目的远程配置和对应署名预设，不删除远程网站上的仓库、本地文件或提交。"), accept: L("移除")) == 1 {
+                    if AppDialogs.confirm(L("移除远程仓库？"), message: L("仅移除本项目的远程配置，不删除远程网站上的仓库、本地文件或提交。"), accept: L("移除")) == 1 {
                         remoteAction { root in try await GitSettingsRemote.remove(root, entry: entry); return nil }
                     }
                 }.disabled(selectedEntry == nil)
             }.buttonStyle(CompactThemeButtonStyle())
             if editingRemote == "rename" { remoteEditForm }
-            VStack(alignment: .leading, spacing: 8) {
-                    Text(L("提交署名")).font(.system(size: 12, weight: .medium))
-                    field(L("提交者姓名"), value: $profileName)
-                    field(L("提交者邮箱"), value: $profileEmail)
-                    Text(L(selectedEntry == nil ? "默认填入电脑的 Git 署名，可修改。保存后用于此项目的新提交。" : "默认填入电脑的 Git 署名，可修改。保存后可在提交区域选择，不影响已有提交。")).font(.caption).foregroundStyle(.secondary)
-
-                }
             if remoteSaved { Text(L("已保存")).font(.caption).foregroundStyle(.secondary) }
             if !remoteError.isEmpty { Text(remoteError).font(.caption).foregroundStyle(.red).textSelection(.enabled) }
         }.disabled(!loaded || model.busy)
@@ -254,60 +245,21 @@ struct WorkspaceSettings: View {
         let values = await (version, exec, globalName, globalEmail)
         guard !Task.isCancelled, model.project?.path == root else { return }
         (gitVersion, gitExec, gitName, gitEmail) = values
-        loadProfile()
+        if let root {
+            let author = await GitCommitAuthor.read(root)
+            guard !Task.isCancelled, model.project?.path == root else { return }
+            authorName = author.name; authorEmail = author.email
+        } else { authorName = ""; authorEmail = "" }
         loaded = true
     }
 }
 
-struct CommitAuthorPicker: View {
+struct CommitAuthorSummary: View {
     @EnvironmentObject var model: Workspace
-    @State private var expanded = false
-    private var authorLabel: String {
-        guard !model.currentAuthorName.isEmpty else { return L("未配置提交署名") }
-        let profile = model.authorProfiles.first { $0.name == model.currentAuthorName && $0.email == model.currentAuthorEmail }
-        return profile.map { $0.remote + " · " + $0.name } ?? model.currentAuthorName
-    }
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Button { expanded.toggle() } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: "person.crop.circle")
-                    Text(authorLabel).lineLimit(1)
-                    Spacer()
-                    if !model.authorProfiles.isEmpty { Image(systemName: "chevron.down").font(.system(size: 9)) }
-                }.font(.system(size: 11)).frame(maxWidth: .infinity)
-            }.buttonStyle(CompactThemeButtonStyle()).disabled(model.busy || model.authorProfiles.isEmpty)
-                .help(model.currentAuthorEmail)
-                .popover(isPresented: $expanded, arrowEdge: .bottom) {
-                    ScrollView {
-                        VStack(spacing: 3) {
-                            ForEach(model.authorProfiles) { profile in
-                                Button {
-                                    expanded = false
-                                    model.useAuthor(profile)
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(profile.remote + " · " + profile.name)
-                                                .font(.system(size: 12, weight: .medium)).foregroundStyle(.primary).lineLimit(1)
-                                            Text(profile.email).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
-                                        }
-                                        Spacer(minLength: 0)
-                                        if profile.name == model.currentAuthorName && profile.email == model.currentAuthorEmail {
-                                            Image(systemName: "checkmark").font(.system(size: 11, weight: .semibold)).foregroundStyle(accent)
-                                        }
-                                    }.padding(.horizontal, 10).frame(height: 48)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }.buttonStyle(AuthorChoiceStyle(selected: profile.name == model.currentAuthorName && profile.email == model.currentAuthorEmail))
-                                    .disabled(model.busy).help(profile.remote + " · " + profile.name + "\n" + profile.email)
-                            }
-                        }.padding(6)
-                    }.frame(width: 300, height: min(CGFloat(model.authorProfiles.count) * 51 + 9, 264))
-                        .background(Color(nsColor: AppTheme.panel))
-                }
-
-        }.onChange(of: model.project?.path) { _, _ in expanded = false }
-            .onChange(of: model.busy) { _, busy in if busy { expanded = false } }
+        Label(model.currentAuthorName.isEmpty ? L("未配置提交署名") : model.currentAuthorName, systemImage: "person.crop.circle")
+            .font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+            .help(model.currentAuthorEmail + "\n" + L("在设置中修改本项目提交署名；与推送目标和登录账号无关。"))
     }
 }
 
@@ -341,24 +293,6 @@ private struct SettingsRemoteButtonStyle: ButtonStyle {
                 .background(selected || hovered ? Color.accentColor.opacity(configuration.isPressed ? 0.20 : 0.10) : Color(nsColor: AppTheme.panel), in: RoundedRectangle(cornerRadius: 7))
                 .overlay(RoundedRectangle(cornerRadius: 7).stroke(selected || hovered ? Color.accentColor.opacity(0.35) : Color.primary.opacity(0.14)))
                 .contentShape(RoundedRectangle(cornerRadius: 7)).onHover { hovered = $0 }.actionCursor()
-        }
-    }
-}
-
-private struct AuthorChoiceStyle: ButtonStyle {
-    let selected: Bool
-    func makeBody(configuration: Configuration) -> some View {
-        ChoiceContent(configuration: configuration, selected: selected)
-    }
-    private struct ChoiceContent: View {
-        let configuration: Configuration
-        let selected: Bool
-        @State private var hovered = false
-        var body: some View {
-            configuration.label
-                .background(accent.opacity(configuration.isPressed ? 0.20 : hovered ? 0.13 : selected ? 0.08 : 0), in: RoundedRectangle(cornerRadius: 6))
-                .contentShape(RoundedRectangle(cornerRadius: 6))
-                .onHover { hovered = $0 }.actionCursor()
         }
     }
 }

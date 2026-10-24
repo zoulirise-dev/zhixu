@@ -5,7 +5,17 @@ import Foundation
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
         try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(atPath: root) }
+        let globalPath = root + "/test-global-config"
+        let previousGlobal = ProcessInfo.processInfo.environment["GIT_CONFIG_GLOBAL"]
+        setenv("GIT_CONFIG_GLOBAL", globalPath, 1)
+        defer {
+            if let previousGlobal { setenv("GIT_CONFIG_GLOBAL", previousGlobal, 1) }
+            else { unsetenv("GIT_CONFIG_GLOBAL") }
+        }
+        try "[user]\nname = Computer Author\nemail = computer@example.invalid\n".write(toFile: globalPath, atomically: true, encoding: .utf8)
         _ = try await Git.run(root, ["init", "-b", "main"])
+        let initial = await GitCommitAuthor.read(root)
+        precondition(initial.name == "Computer Author" && initial.email == "computer@example.invalid")
         var selected = await GitSettingsRemote.current(root)
         precondition(selected.name == "origin" && selected.url.isEmpty)
         try await GitSettingsRemote.save(root, name: selected.name, url: "  ")
@@ -32,32 +42,37 @@ import Foundation
         precondition(origin.trimmingCharacters(in: .whitespacesAndNewlines) == "https://example.invalid/origin.git")
         try await GitSettingsRemote.add(root, name: "gitee", url: "https://example.invalid/gitee.git")
         let entry = GitSettingsRemote.Entry(name: "gitee", url: "https://example.invalid/gitee.git")
-        try await GitAuthorProfile.save(root, entry: entry, name: "Gitee Author", email: "gitee@example.invalid")
-        let originEntry = GitSettingsRemote.Entry(name: "origin", url: "https://example.invalid/origin.git")
-        try await GitAuthorProfile.save(root, entry: originEntry, name: "GitHub Author", email: "github@example.invalid")
-        var profiles = try await GitAuthorProfile.read(root)
-        precondition(profiles.count == 2)
-        try await profiles.first { $0.remote == "origin" }!.activate(root)
+        // Old per-remote presets must not override the effective project identity.
+        _ = try await Git.run(root, ["config", "remote.gitee.zhixuauthorname", "Legacy Author"])
+        _ = try await Git.run(root, ["config", "remote.gitee.zhixuauthoremail", "legacy@example.invalid"])
+        let inherited = await GitCommitAuthor.read(root)
+        precondition(inherited.email == "computer@example.invalid")
         _ = try await Git.run(root, ["-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "first"])
         let first = try await Git.run(root, ["rev-parse", "HEAD"]).trimmingCharacters(in: .whitespacesAndNewlines)
-        try await profiles.first { $0.remote == "gitee" }!.activate(root)
+        try await GitCommitAuthor.save(root, name: " Project Author ", email: " project@example.invalid ")
+        let reloaded = await GitCommitAuthor.read(root)
+        precondition(reloaded.name == "Project Author" && reloaded.email == "project@example.invalid")
+        let global = try String(contentsOfFile: globalPath, encoding: .utf8)
+        precondition(global.contains("computer@example.invalid") && !global.contains("project@example.invalid"))
+        do { try await GitCommitAuthor.save(root, name: "", email: "bad"); preconditionFailure("empty author accepted") } catch {}
+        do { try await GitCommitAuthor.save(root, name: "Bad\nName", email: "bad"); preconditionFailure("newline accepted") } catch {}
         _ = try await Git.run(root, ["-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "second"])
         let firstAuthor = try await Git.run(root, ["show", "-s", "--format=%an|%ae", first])
         let secondAuthor = try await Git.run(root, ["show", "-s", "--format=%an|%ae", "HEAD"])
-        precondition(firstAuthor.trimmingCharacters(in: .whitespacesAndNewlines) == "GitHub Author|github@example.invalid")
-        precondition(secondAuthor.trimmingCharacters(in: .whitespacesAndNewlines) == "Gitee Author|gitee@example.invalid")
+        precondition(firstAuthor.trimmingCharacters(in: .whitespacesAndNewlines) == "Computer Author|computer@example.invalid")
+        precondition(secondAuthor.trimmingCharacters(in: .whitespacesAndNewlines) == "Project Author|project@example.invalid")
         _ = try await Git.run(root, ["config", "branch.main.remote", "gitee"])
         try await GitSettingsRemote.rename(root, entry: entry, to: "backup")
-        profiles = try await GitAuthorProfile.read(root)
-        precondition(profiles.contains { $0.remote == "backup" && $0.name == "Gitee Author" })
+        let afterRename = await GitCommitAuthor.read(root)
+        precondition(afterRename.email == "project@example.invalid")
         let upstream = try await Git.run(root, ["config", "branch.main.remote"])
         precondition(upstream.trimmingCharacters(in: .whitespacesAndNewlines) == "backup")
         do { try await GitSettingsRemote.remove(root, entry: entry); preconditionFailure("stale entry accepted") } catch {}
         do { try await GitSettingsRemote.add(root, name: "origin", url: "x"); preconditionFailure("duplicate accepted") } catch {}
         do { try await GitSettingsRemote.add(root, name: "bad name", url: "x"); preconditionFailure("invalid name accepted") } catch {}
         try await GitSettingsRemote.remove(root, entry: .init(name: "backup", url: entry.url))
-        profiles = try await GitAuthorProfile.read(root)
-        precondition(profiles.count == 1 && profiles[0].remote == "origin")
+        let afterRemove = await GitCommitAuthor.read(root)
+        precondition(afterRemove.email == "project@example.invalid")
         let retained = try await Git.run(root, ["show", "-s", "--format=%an|%ae", "HEAD"])
         precondition(retained == secondAuthor)
         print("Settings remote and author identity tests passed")

@@ -1303,39 +1303,26 @@ enum GitProjectFolder {
 }
 
 
-struct GitAuthorProfile: Identifiable, Sendable {
-    let remote: String
+/// Git's effective project identity: local configuration overrides computer defaults.
+/// Legacy remote.*.zhixuauthor* presets are intentionally no longer read or activated.
+struct GitCommitAuthor: Sendable {
     let name: String
     let email: String
-    var id: String { remote }
-    static func read(_ root: String) async throws -> [GitAuthorProfile] {
-        let config = try await Git.run(root, ["config", "--local", "--null", "--list"])
-        var values: [String: String] = [:]
-        for record in config.split(separator: "\0") {
-            let pair = record.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
-            if pair.count == 2 { values[String(pair[0])] = String(pair[1]) }
-        }
-        return values.keys.filter { $0.hasPrefix("remote.") && $0.hasSuffix(".url") }.compactMap { key in
-            let remote = String(key.dropFirst(7).dropLast(4))
-            guard let name = values["remote." + remote + ".zhixuauthorname"], let email = values["remote." + remote + ".zhixuauthoremail"], !name.isEmpty, !email.isEmpty else { return nil }
-            return GitAuthorProfile(remote: remote, name: name, email: email)
-        }.sorted { $0.remote < $1.remote }
+    static func read(_ root: String) async -> Self {
+        async let name = Git.run(root, ["config", "user.name"])
+        async let email = Git.run(root, ["config", "user.email"])
+        return await Self(name: ((try? name) ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
+                          email: ((try? email) ?? "").trimmingCharacters(in: .whitespacesAndNewlines))
     }
-    static func save(_ root: String, entry: GitSettingsRemote.Entry, name: String, email: String) async throws {
-        try await GitSettingsRemote.validate(root, entry: entry)
+    static func save(_ root: String, name: String, email: String) async throws {
         try validate(name: name, email: email)
-        _ = try await Git.run(root, ["config", "--local", "remote." + entry.name + ".zhixuauthorname", name.trimmingCharacters(in: .whitespacesAndNewlines)])
-        _ = try await Git.run(root, ["config", "--local", "remote." + entry.name + ".zhixuauthoremail", email.trimmingCharacters(in: .whitespacesAndNewlines)])
+        _ = try await Git.run(root, ["config", "--local", "user.name", name.trimmingCharacters(in: .whitespacesAndNewlines)])
+        _ = try await Git.run(root, ["config", "--local", "user.email", email.trimmingCharacters(in: .whitespacesAndNewlines)])
     }
     static func validate(name: String, email: String) throws {
         let values = [name.trimmingCharacters(in: .whitespacesAndNewlines), email.trimmingCharacters(in: .whitespacesAndNewlines)]
         guard values.allSatisfy({ !$0.isEmpty && !$0.contains(where: { $0 == "\n" || $0 == "\r" || $0 == "<" || $0 == ">" }) }) else {
             throw GitFailure.message(L("请填写有效的提交者姓名和邮箱。"))
         }
-    }
-    func activate(_ root: String) async throws {
-        guard try await Self.read(root).contains(where: { $0.remote == remote && $0.name == name && $0.email == email }) else { throw GitFailure.message(L("提交署名已变化，请刷新后重试。")) }
-        _ = try await Git.run(root, ["config", "--local", "user.name", name])
-        _ = try await Git.run(root, ["config", "--local", "user.email", email])
     }
 }

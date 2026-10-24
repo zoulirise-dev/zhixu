@@ -8,11 +8,11 @@
 
 ### macOS · M 系列芯片
 
-**已上线 · v1.0.2**｜适用于 macOS 14 及以上、Apple Silicon（M 系列）芯片，暂不支持 Intel Mac。
+**当前版本 · v1.0.3**｜适用于 macOS 14 及以上、Apple Silicon（M 系列）芯片，暂不支持 Intel Mac。
 
 | Gitee 下载 | GitHub 下载 |
 | --- | --- |
-| [下载 macOS 安装包（DMG）](https://gitee.com/zoulirise/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) | [下载 macOS 安装包（DMG）](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.2/Zhixu-1.0.2-macOS-arm64.dmg) |
+| [下载 macOS 安装包（DMG）](https://gitee.com/zoulirise/zhixu/releases/download/v1.0.3/Zhixu-1.0.3-macOS-arm64.dmg) | [下载 macOS 安装包（DMG）](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.3/Zhixu-1.0.3-macOS-arm64.dmg) |
 
 安装方式：打开 DMG，将“枝序”拖入 Applications（应用程序）。
 
@@ -42,9 +42,9 @@
 
 ### 同一套代码放在 GitHub 和 Gitee，不想来回配置？
 
-在项目设置里管理多个远程地址和署名，提交前选署名，推送或拉取时选目标。已有提交的署名保持不变，登录认证优先复用电脑现有配置。
+在项目设置里管理多个远程地址，推送或拉取时选择目标。“本项目提交署名”独立设置，默认读取电脑 Git 配置；同一条提交推送到不同平台时保持相同署名。登录认证优先复用电脑现有配置。
 
-![在一张卡片内管理远程地址和提交署名](assets/screenshots/remote-settings.png)
+
 
 以上均为演示项目的真实界面截图。
 
@@ -52,7 +52,7 @@
 
 | 平台 | 状态 | 当前要求 |
 | --- | --- | --- |
-| macOS | 已实现，版本 1.0.2 | macOS 14+，Apple Silicon，系统可用 Git |
+| macOS | 已实现，版本 1.0.3 | macOS 14+，Apple Silicon，系统可用 Git |
 | Windows | 计划中，尚无实现或安装包 | 技术方案与最低系统要求待确定 |
 
 macOS 使用 SwiftUI/AppKit，不依赖 Node 或 Electron。Windows 计划提供相同的主要工作流程，但不会直接运行 macOS 界面代码。安装包通过 Gitee 和 GitHub 的发行版提供，源码构建方法见下文。
@@ -63,7 +63,7 @@ macOS 使用 SwiftUI/AppKit，不依赖 Node 或 Electron。Windows 计划提供
 - 仅提交勾选文件；支持高级手动暂存模式、提交并推送。
 - 分支创建、切换、重命名、删除、合并和对比。
 - 切换覆盖修改时，选择临时收起、携带或放弃修改。
-- 管理多个远程仓库及对应署名，在提交前选择身份；选择推送/拉取目标；显示待推送、待拉取和分叉状态。
+- 管理多个远程仓库，独立设置本项目提交署名；选择推送/拉取目标；显示待推送、待拉取和分叉状态。
 - 临时备份列表、差异查看、指定恢复、单文件或整条备份删除。
 - 提交详情、单文件历史、恢复旧版本和反向提交。
 - 冲突分块处理、标记解决、继续或中止操作。
