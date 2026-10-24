@@ -714,6 +714,7 @@ struct ContentView: View {
     var commitBox: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack { Text(L("提交更改")).font(.system(size: 12, weight: .semibold)); Spacer(); Text("⌘ ↵").font(.caption).foregroundStyle(.tertiary) }
+            CommitAuthorPicker().environmentObject(m)
             TextEditor(text: $m.message).font(.system(size: 12)).scrollContentBackground(.hidden).padding(6).frame(height: 54).background(Color(nsColor: AppTheme.panel), in: RoundedRectangle(cornerRadius: 7)).overlay(RoundedRectangle(cornerRadius: 7).stroke(Color.gray.opacity(0.18))).overlay(alignment: .topLeading) { if m.message.isEmpty { Text(L("填写提交说明…")).font(.system(size: 12)).foregroundStyle(.tertiary).padding(.leading, 11).padding(.top, 6).allowsHitTesting(false) } }
             Text(m.advancedMode ? L("已选择 {0} 个文件的暂存内容", [String(describing: m.commitItems.count)]) : L("已选择 {0} 个文件", [String(describing: m.commitItems.count)])).font(.system(size: 10)).foregroundStyle(.secondary)
             HStack(spacing: 8) {

@@ -35,6 +35,27 @@ enum AppLanguage {
         return result
     }
     static let english: [String: String] = [
+        "默认填入电脑的 Git 署名，可修改。保存后用于此项目的新提交。": "Filled from this computer’s Git identity and editable. After saving, it applies to new commits in this project.",
+        "默认填入电脑的 Git 署名，可修改。保存后可在提交区域选择，不影响已有提交。": "Filled from this computer’s Git identity and editable. After saving, select it in the commit area. Existing commits are unchanged.",
+        "提交署名": "Commit author",
+        "移除": "Remove",
+        "已保存": "Saved",
+        "远程仓库地址": "Remote URL",
+        "新增远程仓库": "Add remote",
+        "移除远程仓库？": "Remove remote?",
+        "仅移除本项目的远程配置和对应署名预设，不删除远程网站上的仓库、本地文件或提交。": "Remove only this project’s remote configuration and author preset. The hosted repository, local files and commits are kept.",
+        "远程名称": "Remote name",
+        "此远程的署名预设": "Author preset for this remote",
+        "保存后，在提交区域选择署名。只影响之后的新提交，推送不会改变署名。": "After saving, choose the author in the commit area. Only new commits are affected; pushing does not change authorship.",
+        "保存署名预设": "Save author preset",
+        "未配置提交署名": "No commit author configured",
+        "远程名称无效，请使用不含空格的名称，例如 origin 或 gitee。": "Invalid remote name. Use a name without spaces, such as origin or gitee.",
+        "远程仓库配置已变化，请重新打开设置后重试。": "Remote configuration changed. Reopen settings and try again.",
+        "此远程名称已存在。": "This remote name already exists.",
+        "请填写有效的远程仓库地址。": "Enter a valid remote URL.",
+        "请填写有效的提交者姓名和邮箱。": "Enter a valid author name and email.",
+        "提交署名已变化，请刷新后重试。": "The author preset changed. Refresh and try again.",
+
         "已忽略": "Ignored",
         "此文件夹尚未初始化 Git": "This folder is not yet a Git repository",
         "是否将此文件夹初始化为 Git 项目？现有文件会保留，不会自动提交或上传。\n{0}": "Initialize this folder as a Git repository? Existing files will be kept. Nothing will be committed or uploaded automatically.\n{0}",

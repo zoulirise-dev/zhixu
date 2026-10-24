@@ -3,6 +3,22 @@ import AppKit
 
 @MainActor final class Workspace: ObservableObject {
     @Published var projects: [Project] = []
+    @Published var authorProfiles: [GitAuthorProfile] = []
+    @Published var currentAuthorName = ""
+    @Published var currentAuthorEmail = ""
+    func reloadAuthors() async throws {
+        guard let root = project?.path else { authorProfiles = []; currentAuthorName = ""; currentAuthorEmail = ""; return }
+        let profiles = try await GitAuthorProfile.read(root)
+        let name = ((try? await Git.run(root, ["config", "user.name"])) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = ((try? await Git.run(root, ["config", "user.email"])) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard project?.path == root else { return }
+        authorProfiles = profiles; currentAuthorName = name; currentAuthorEmail = email
+    }
+    func useAuthor(_ profile: GitAuthorProfile) {
+        guard let root = project?.path else { return }
+        perform { try await profile.activate(root); try await self.reloadAuthors() }
+    }
+
     @Published var project: Project?
     @Published var changes: [Change] = []
     @Published var branches: [Branch] = []
@@ -498,6 +514,7 @@ import AppKit
         pendingPushIDs = pending.ids
         pendingPullCount = pending.behind
         operationKind = try await GitTools.operation(root)
+        try await reloadAuthors()
         try await readHistory()
         let snapshot = try await readFiles(root: root, fileChanges: changes)
         files = snapshot.paths; ignoredFiles = snapshot.ignored
@@ -606,7 +623,7 @@ import AppKit
         previewTask = Task {
             let text = await Task.detached(priority: .userInitiated) { () -> String? in
                 let url = URL(fileURLWithPath: root).appendingPathComponent(path)
-                guard url.resolvingSymlinksInPath().path.hasPrefix(root + "/"), !path.split(separator: "/").contains(".git"),
+                guard url.resolvingSymlinksInPath().path.hasPrefix(URL(fileURLWithPath: root).resolvingSymlinksInPath().path + "/"), !path.split(separator: "/").contains(".git"),
                       let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 2_000_000,
                       let data = try? Data(contentsOf: url), !data.contains(0) else { return nil }
                 return String(data: data, encoding: .utf8)
@@ -647,7 +664,7 @@ import AppKit
                 var lines = DiffLine.parse(content)
             if content.isEmpty, !staged, untracked {
                 let url = URL(fileURLWithPath: root).appendingPathComponent(path)
-                if url.resolvingSymlinksInPath().path.hasPrefix(root + "/"),
+                if url.resolvingSymlinksInPath().path.hasPrefix(URL(fileURLWithPath: root).resolvingSymlinksInPath().path + "/"),
                    let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 2_000_000,
                    let data = try? Data(contentsOf: url), !data.contains(0), let source = String(data: data, encoding: .utf8) {
                     lines = DiffLine.added(source)
@@ -677,7 +694,7 @@ import AppKit
         guard doc.dirty else { return true }
         do {
             let url = URL(fileURLWithPath: root).appendingPathComponent(doc.path)
-            guard url.resolvingSymlinksInPath().path.hasPrefix(root + "/"), !doc.path.split(separator: "/").contains(".git") else { throw GitFailure.message(L("无法编辑项目外的文件或 Git 内部文件。")) }
+            guard url.resolvingSymlinksInPath().path.hasPrefix(URL(fileURLWithPath: root).resolvingSymlinksInPath().path + "/"), !doc.path.split(separator: "/").contains(".git") else { throw GitFailure.message(L("无法编辑项目外的文件或 Git 内部文件。")) }
             let disk = try String(contentsOf: url, encoding: .utf8)
             guard disk == doc.savedText else { throw GitFailure.message(L("「{0}」已被其他程序修改。为避免覆盖，请复制当前编辑内容后重新打开文件。", [String(describing: doc.name)])) }
             try doc.text.write(to: url, atomically: true, encoding: .utf8)
@@ -1033,7 +1050,7 @@ import AppKit
         let parts = path.split(separator: "/")
         guard !path.isEmpty, !path.hasPrefix("/"), !parts.contains(".."), !parts.contains(".git") else { error = L("请输入项目内的相对路径，例如 src/main.js。"); return }
         let url = URL(fileURLWithPath: root).appendingPathComponent(path)
-        guard url.resolvingSymlinksInPath().path.hasPrefix(root + "/"), !FileManager.default.fileExists(atPath: url.path) else { error = L("文件已存在或路径不在当前项目内。"); return }
+        guard url.resolvingSymlinksInPath().path.hasPrefix(URL(fileURLWithPath: root).resolvingSymlinksInPath().path + "/"), !FileManager.default.fileExists(atPath: url.path) else { error = L("文件已存在或路径不在当前项目内。"); return }
         perform {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try Data().write(to: url, options: .withoutOverwriting)

@@ -72,6 +72,25 @@ import AppKit
             }
             throw GitFailure.message("Preview timeout")
         }
+        let alias = root.deletingLastPathComponent().appendingPathComponent("alias-" + UUID().uuidString)
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: root)
+        defer { try? FileManager.default.removeItem(at: alias) }
+        let aliasModel = Workspace(defaults: prefs, restore: false)
+        aliasModel.project = Project(path: alias.path)
+        aliasModel.load("a.java", staged: false)
+        while aliasModel.loadingPreview { try await Task.sleep(nanoseconds: 10_000_000) }
+        try check(aliasModel.canEdit && aliasModel.code == "original a.java\n", "alias project path opens text files")
+        aliasModel.code = "alias edit\n"
+        try check(aliasModel.save(), "alias project path saves text files")
+        try "original a.java\n".write(to: root.appendingPathComponent("a.java"), atomically: true, encoding: .utf8)
+        let outside = root.deletingLastPathComponent().appendingPathComponent("outside-" + UUID().uuidString)
+        try "outside".write(to: outside, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: outside) }
+        try FileManager.default.createSymbolicLink(at: root.appendingPathComponent("escape.txt"), withDestinationURL: outside)
+        aliasModel.load("escape.txt", staged: false)
+        while aliasModel.loadingPreview { try await Task.sleep(nanoseconds: 10_000_000) }
+        try check(!aliasModel.canEdit, "external symlink remains blocked")
+        try FileManager.default.removeItem(at: root.appendingPathComponent("escape.txt"))
         model.load("a.java", staged: false); try await waitPreview(); model.load("b.php", staged: false); try await waitPreview()
         try check(model.tabs.count == 1 && model.activeTabID == "b.php", "new file replaces unchanged preview tab")
         model.code = "<?php echo 'edited'; ?>"
