@@ -1,7 +1,11 @@
-# Windows 版本规划
+# Windows 版本状态
 
-Windows 版尚未开始实现。本目录用于后续源码、测试和平台构建脚本，不代表已有可运行版本。
+1.0.4 已提供 Flutter x64 EXE 安装版，工程位于 `apps/flutter_prototype/windows`，共用代码见 [Flutter 桌面版](../flutter_prototype/README.md)。
 
-技术框架、最低 Windows 版本、CPU 架构、安装格式和签名方案在开发前确定。Windows 实现应对齐 macOS 的选择性提交、分支操作、冲突解决和临时备份行为，同时使用 Windows 适合的认证存储、文件权限、进程管理和输入法机制。
+需要 Windows 10/11 x64 和 Git for Windows。运行 EXE 安装程序，安装后启动枝序，无需安装 Flutter 或 Visual Studio。Windows 包未签名；GitHub 网页登录需要 GitHub CLI，也可使用电脑现有 Git 认证或 HTTPS 凭据。
 
-先共享功能规范、测试场景、文档和品牌素材。只有出现真实的跨平台可复用实现时才提取共享代码，不预先建立空的共享核心。详见 [平台架构](../../docs/architecture.md)。
+静态检查、自动测试、Release 编译、启动和原生窗口操作检查已通过。输入法、不同 DPI、多屏贴靠和真实远程认证仍需实机验收。现有 macOS 原生版继续保留。
+
+详见 [1.0.4 说明](../../docs/releases/v1.0.4.md) 和 [提交与发布准备](../../docs/releases/publish-1.0.4.md)。
+
+EXE 安装版默认按当前用户安装，复用上次目录，升级前要求退出应用；升级及卸载保留用户偏好。

@@ -52,3 +52,10 @@ id_ed25519*
 *.msix
 *.zip
 *.log
+
+# Flutter generated state
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/flutter/ephemeral/
+**/Flutter/ephemeral/

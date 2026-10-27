@@ -1,0 +1,46 @@
+name: Windows installer
+on:
+  workflow_dispatch:
+  push:
+    branches: ['build/windows-portable-*']
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: apps/flutter_prototype
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install verified Flutter SDK
+        run: |
+          $manifest = Invoke-RestMethod 'https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json'
+          $sdk = $manifest.releases | Where-Object { $_.version -eq '3.47.2' -and $_.channel -eq 'stable' } | Select-Object -First 1
+          if (!$sdk) { throw 'Flutter 3.47.2 stable SDK was not found' }
+          $archive = Join-Path $env:RUNNER_TEMP 'flutter.zip'
+          Invoke-WebRequest "$($manifest.base_url)/$($sdk.archive)" -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLower() -ne $sdk.sha256.ToLower()) { throw 'Flutter checksum mismatch' }
+          Expand-Archive $archive -DestinationPath $env:RUNNER_TEMP
+          "$env:RUNNER_TEMP\flutter\bin" | Out-File $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Check and build
+        run: |
+          flutter config --enable-windows-desktop
+          flutter pub get
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          flutter analyze
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          flutter test
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          flutter build windows --release
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Package installer
+        run: ./tool/package-windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zhixu-windows-installer
+          path: apps/flutter_prototype/build/installer/*
+          if-no-files-found: error
+          retention-days: 14

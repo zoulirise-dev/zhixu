@@ -32,7 +32,7 @@ def main():
         env = {**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull}
         paths = subprocess.check_output(command + ["ls-files", "--others", "--exclude-standard", "-z"], cwd=ROOT, env=env).split(b"\0")
         # Verify important exclusions, even when these files do not exist locally.
-        excluded = ["证书资料/release.env", "测试报告/report.txt", ".build/log", "dist/枝序.app/Contents/Info.plist", "apps/macos/.build/test", "apps/macos/.swiftpm/config", "apps/macos/Vendor/GitHubCLI/gh", "apps/windows/bin/app.dll", "apps/windows/obj/build.cache", ".env", "keys/signing.p12", "keys/private.pem"]
+        excluded = ["证书资料/release.env", "测试报告/report.txt", ".build/log", "dist/枝序.app/Contents/Info.plist", "apps/macos/.build/test", "apps/macos/.swiftpm/config", "apps/macos/Vendor/GitHubCLI/gh", "apps/windows/bin/app.dll", "apps/windows/obj/build.cache", ".env", "keys/signing.p12", "keys/private.pem", "apps/flutter_prototype/build/windows/app.exe", "apps/flutter_prototype/.dart_tool/package_config.json", "apps/flutter_prototype/windows/flutter/ephemeral/generated_config.cmake", "apps/flutter_prototype/macos/Flutter/ephemeral/Flutter-Generated.xcconfig"]
         for path in excluded:
             result = subprocess.run(command + ["check-ignore", "-q", "--", path], cwd=ROOT, env=env)
             if result.returncode != 0:

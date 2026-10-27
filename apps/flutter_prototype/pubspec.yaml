@@ -1,0 +1,25 @@
+name: zhixu_prototype
+description: Independent Flutter desktop prototype for Zhixu.
+publish_to: none
+version: 1.0.4+104
+environment:
+  sdk: ^3.13.2
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  file_selector: ^1.0.3
+  path: ^1.9.1
+  markdown: ^7.3.0
+  flutter_markdown_plus: ^1.0.12
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/AppIcon.png
