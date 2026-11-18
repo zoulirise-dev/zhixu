@@ -34,8 +34,12 @@ void main() {
         tester.getCenter(boxes.at(1)).dx,
       );
       final dynamic state = tester.state(find.byType(WorkspacePage));
-      expect(state.checked.length, 3);
+      expect(state.checked, isEmpty);
       await tester.tapAt(tester.getCenter(boxes.first) + const Offset(9, 0));
+      await tester.pumpAndSettle();
+      expect(state.checked.length, 3);
+      await state.selectTab(1);
+      await state.selectTab(0);
       await tester.pumpAndSettle();
       expect(state.checked, isEmpty);
       expect(tester.takeException(), isNull);

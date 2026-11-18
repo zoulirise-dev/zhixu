@@ -150,6 +150,20 @@ bool Win32Window::Create(const std::wstring& title,
 }
 
 bool Win32Window::Show() {
+  WINDOWPLACEMENT placement{};
+  DWORD size = sizeof(placement);
+  if (RegGetValueW(HKEY_CURRENT_USER, L"Software\\Zhixu\\Desktop",
+                   L"Placement", RRF_RT_REG_BINARY, nullptr, &placement,
+                   &size) == ERROR_SUCCESS && size == sizeof(placement) &&
+      placement.length == sizeof(placement) &&
+      placement.rcNormalPosition.right > placement.rcNormalPosition.left &&
+      placement.rcNormalPosition.bottom > placement.rcNormalPosition.top) {
+    placement.flags = 0;
+    placement.showCmd = placement.showCmd == SW_SHOWMAXIMIZED
+                            ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
+    // Windows adjusts the placement when the original monitor is disconnected.
+    if (SetWindowPlacement(window_handle_, &placement)) return true;
+  }
   return ShowWindow(window_handle_, SW_SHOWNORMAL);
 }
 
@@ -179,7 +193,17 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
-    case WM_DESTROY:
+    case WM_EXITSIZEMOVE:
+    case WM_DESTROY: {
+      WINDOWPLACEMENT placement{};
+      placement.length = sizeof(placement);
+      if (IsWindowVisible(hwnd) && GetWindowPlacement(hwnd, &placement)) {
+        if (placement.flags & WPF_RESTORETOMAXIMIZED)
+          placement.showCmd = SW_SHOWMAXIMIZED;
+        RegSetKeyValueW(HKEY_CURRENT_USER, L"Software\\Zhixu\\Desktop",
+                        L"Placement", REG_BINARY, &placement, sizeof(placement));
+      }
+      if (message == WM_EXITSIZEMOVE) break;
       window_handle_ = nullptr;
       Destroy();
       if (quit_on_close_) {
@@ -187,6 +211,7 @@ Win32Window::MessageHandler(HWND hwnd,
       }
       return 0;
 
+    }
     case WM_DPICHANGED: {
       auto newRectSize = reinterpret_cast<RECT*>(lparam);
       LONG newWidth = newRectSize->right - newRectSize->left;

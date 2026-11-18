@@ -91,16 +91,12 @@ void main() {
       expect((metrics['left'] as num) - (metrics['top'] as num), closeTo(0, 1));
     }
     await capture('changes');
-    // Uncheck theme.js; it is already staged and must remain outside our commit.
+    // Select only tasks.js, leaving the staged theme.js outside the commit.
     final row = find
-        .ancestor(of: find.text('theme.js'), matching: find.byType(HoverRow))
+        .ancestor(of: find.text('tasks.js').first, matching: find.byType(HoverRow))
         .first;
     await tester.tap(find.descendant(of: row, matching: find.byType(Checkbox)));
-    await tester.tap(find.text('文件').first);
-    await tester.pumpAndSettle();
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('tasks.js').first);
+    await tester.tap(find.text('编辑工作区文件'));
     await tester.pumpAndSettle();
     await waitFor(find.byKey(const Key('code-input')));
     final field = tester.widget<TextField>(find.byKey(const Key('code-input')));
