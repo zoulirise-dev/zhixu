@@ -19,6 +19,7 @@ set uiLanguage(String value) {
 }
 
 final Map<String, String> english = {
+  '编辑工作区文件': 'Edit working file',
   '版本 {0}': 'Version {0}',
   '单击文件夹进入，点击“选择文件夹”确认当前目录。': 'Click a folder to open it, then choose Select Folder to confirm the current directory.',
   '此电脑': 'This PC',

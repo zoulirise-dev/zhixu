@@ -28,7 +28,7 @@ part 'workspace/explorer.dart';
 
 const appVersion = String.fromEnvironment(
   'FLUTTER_BUILD_NAME',
-  defaultValue: '1.0.4',
+  defaultValue: '1.0.5',
 );
 
 final appearance = ValueNotifier<ThemeMode>(ThemeMode.system);
@@ -495,7 +495,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     author = values[3] as String;
     email = values[4] as String;
     checked = initial
-        ? changes.where((c) => !c.conflict).map((c) => c.path).toSet()
+        ? <String>{}
         : checked.intersection(changes.map((c) => c.path).toSet());
     try {
       final c = await git!.counts(path);
@@ -1596,7 +1596,13 @@ class _WorkspacePageState extends State<WorkspacePage> {
     ),
   );
   Future<void> selectTab(int next) async {
-    setState(() => tab = next);
+    setState(() {
+      if (next == 0 && tab != 0) {
+        checked.clear();
+        changeAnchor = null;
+      }
+      tab = next;
+    });
     if (next == 2) await perform('正在读取历史…', () => loadHistory(reset: true));
   }
 
@@ -2027,7 +2033,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
           width: 26,
           child: CompactCheckbox(
             value:
-                changes.isNotEmpty &&
+                checked.isNotEmpty &&
                 checked.length == changes.where((c) => !c.conflict).length,
             onChanged: busy
                 ? null
@@ -2326,6 +2332,16 @@ class _WorkspacePageState extends State<WorkspacePage> {
                   ),
                 ),
               ),
+              if (document!.diff &&
+                  !isPreviewImage(document!.path) &&
+                  changes.any((c) => c.path == document!.path &&
+                      !c.conflict && !c.status.contains('D')))
+                ZButton(
+                  text: '编辑工作区文件',
+                  icon: Icons.edit_outlined,
+                  height: 24,
+                  onTap: () => openFile(document!.path, pin: true),
+                ),
               if (!document!.diff && document!.path.endsWith('.md'))
                 ZButton(
                   text: document!.preview ? '原文' : '预览',
