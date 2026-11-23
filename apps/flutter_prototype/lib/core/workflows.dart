@@ -6,12 +6,12 @@ import 'package:path/path.dart' as p;
 import 'git_service.dart';
 
 class BranchInfo {
-  final String ref, name, upstream;
+  final String ref, name, upstreamRef;
   final bool remote, current;
   const BranchInfo(
     this.ref,
     this.name,
-    this.upstream,
+    this.upstreamRef,
     this.remote,
     this.current,
   );
@@ -62,7 +62,7 @@ extension GitWorkflows on GitService {
     final text = (await run(root, [
       'for-each-ref',
       '--sort=-committerdate',
-      '--format=%(refname)%00%(refname:short)%00%(upstream:short)%00%(HEAD)%00%(symref)',
+      '--format=%(refname)%00%(refname:lstrip=2)%00%(upstream)%00%(HEAD)%00%(symref)',
       'refs/heads',
       'refs/remotes',
     ])).out;
@@ -93,12 +93,16 @@ extension GitWorkflows on GitService {
   }
 
   Future<(int, int, String)> counts(String root) async {
-    final upstream = (await run(root, [
+    final upstreamRef = (await run(root, [
       'rev-parse',
-      '--abbrev-ref',
+      '--verify',
       '--symbolic-full-name',
       '@{upstream}',
     ], check: false)).out.trim();
+    final upstream = upstreamRef.replaceFirst(
+      RegExp(r'^refs/(heads|remotes)/'),
+      '',
+    );
     if ((await head(root)).isEmpty) return (0, 0, upstream);
     if (upstream.isEmpty) {
       final out = (await run(root, [
@@ -148,28 +152,15 @@ extension GitWorkflows on GitService {
       await run(root, ['switch', '--', target.name]);
       return;
     }
-    // Reuse existing tracking branch instead of trying to recreate it.
-    final local = (await branches(root))
-        .where((b) => !b.remote && b.upstream == target.name)
-        .toList();
-    if (local.isNotEmpty) {
-      await run(root, ['switch', '--', local.first.name]);
-      return;
+    final desired = target.name.substring(target.name.indexOf('/') + 1);
+    final locals = (await branches(root)).where((b) => !b.remote);
+    final local = locals.where((b) => b.name == desired).firstOrNull ??
+        locals.where((b) => b.upstreamRef == target.ref).firstOrNull;
+    if (local == null) {
+      await run(root, ['switch', '--track', '-c', desired, target.ref]);
+    } else if (!local.current) {
+      await run(root, ['switch', '--', local.name]);
     }
-    final slash = target.name.indexOf('/');
-    final desired = target.name.substring(slash + 1);
-    final existing = (await branches(root))
-        .where((b) => !b.remote)
-        .map((b) => b.name)
-        .toSet();
-    var name = desired;
-    if (existing.contains(name)) name = target.name;
-    var n = 2;
-    while (existing.contains(name)) {
-      name = '${target.name}-$n';
-      n++;
-    }
-    await run(root, ['switch', '--track', '-c', name, target.ref]);
   }
 
   Future<void> renameBranch(String root, BranchInfo target, String name) async {
@@ -203,7 +194,7 @@ extension GitWorkflows on GitService {
       ':refs/heads/$old',
     ], timeout: const Duration(minutes: 2));
     for (final b in await branches(root)) {
-      if (!b.remote && b.upstream == target.name) {
+      if (!b.remote && b.upstreamRef == target.ref) {
         await run(root, [
           'config',
           'branch.${b.name}.merge',

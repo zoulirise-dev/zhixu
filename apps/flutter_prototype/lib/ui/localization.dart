@@ -39,8 +39,8 @@ final Map<String, String> english = {
   "{0} · 差异": "{0} \u00b7 Diff",
   "忽略此类文件 ({0})": "Ignore files of this type ({0})",
   "本地分支 · {0}": "Local branches \u00b7 {0}",
-  "远程分支 · 创建本地跟踪分支 · {0}":
-      "Remote branches \u00b7 Create tracking branch \u00b7 {0}",
+  "远程分支 · {0}":
+      "Remote branches \u00b7 {0}",
   "将从远程删除 {0}，其他协作者也会受到影响。":
       "Delete {0} from the remote. Other collaborators will be affected.",
   "删除本地分支 {0}，未合并提交会受到保护。":
@@ -1064,7 +1064,6 @@ final Map<String, String> english = {
       "No subfolders here\nYou can select the current folder",
   "进入文件夹": "Open Folder",
   "远程分支": "Remote Branches",
-  "远程分支 · 创建本地跟踪分支": "Remote · Create a Local Tracking Branch",
   "远程操作未完成。远程分支可能已更新、名称已存在、分支受保护，或服务器不支持原子操作。请获取最新状态后重试。\n\n": "Remote operation failed. The branch may have changed, the name may exist, the branch may be protected, or atomic operations may be unsupported. Fetch and retry.\n\n",
   "远程操作未完成：新分支名称已存在，请换一个名称。": "Remote operation failed: the new branch name exists. Choose another name.",
   "远程默认分支指针不能重命名或删除。":

@@ -68,7 +68,7 @@ extension _WorkspaceDialogs on _WorkspacePageState {
                                 Padding(
                                   padding: EdgeInsets.fromLTRB(8, 10, 8, 6),
                                   child: small(
-                                    '${remote ? '远程分支 · 创建本地跟踪分支' : '本地分支'} · ${items.where((b) => b.remote == remote && b.name.toLowerCase().contains(filter.toLowerCase())).length}',
+                                    '${remote ? '远程分支' : '本地分支'} · ${items.where((b) => b.remote == remote && b.name.toLowerCase().contains(filter.toLowerCase())).length}',
                                   ),
                                 ),
                                 for (final b
@@ -138,7 +138,7 @@ extension _WorkspaceDialogs on _WorkspacePageState {
                                             }
                                           },
                                           enabled:
-                                              !b.current && b.name != upstream,
+                                              !b.current && !(b.remote && b.name == upstream),
                                           icon: Icons.delete_outline,
                                           destructive: true,
                                         ),

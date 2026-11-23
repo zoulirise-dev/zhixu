@@ -1,7 +1,7 @@
 name: zhixu_prototype
 description: Independent Flutter desktop prototype for Zhixu.
 publish_to: none
-version: 1.0.5+105
+version: 1.0.6+106
 environment:
   sdk: ^3.13.2
 dependencies:

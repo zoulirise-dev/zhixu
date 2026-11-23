@@ -28,7 +28,7 @@ part 'workspace/explorer.dart';
 
 const appVersion = String.fromEnvironment(
   'FLUTTER_BUILD_NAME',
-  defaultValue: '1.0.5',
+  defaultValue: '1.0.6',
 );
 
 final appearance = ValueNotifier<ThemeMode>(ThemeMode.system);
@@ -1612,30 +1612,34 @@ class _WorkspacePageState extends State<WorkspacePage> {
         padding: EdgeInsets.symmetric(horizontal: 16),
         child: SizedBox(
           height: 48,
-          child: Row(
-            children: [
-              for (final item in [
-                (0, '变更', Icons.edit_square),
-                (1, '文件', Icons.folder_outlined),
-                (2, '历史', Icons.history),
-              ])
-                Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      ZButton(
-                        text: item.$2,
-                        icon: item.$3,
-                        selected: tab == item.$1,
-                        onTap: () => selectTab(item.$1),
-                      ),
-                      if (tab == item.$1)
-                        Container(width: 24, height: 2, color: brand),
-                    ],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                for (final item in [
+                  (0, '变更', Icons.edit_square),
+                  (1, '文件', Icons.folder_outlined),
+                  (2, '历史', Icons.history),
+                ])
+                  Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        ZButton(
+                          text: item.$2,
+                          icon: item.$3,
+                          selected: tab == item.$1,
+                          onTap: () => selectTab(item.$1),
+                        ),
+                        if (tab == item.$1)
+                          Container(width: 24, height: 2, color: brand),
+                      ],
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1646,13 +1650,23 @@ class _WorkspacePageState extends State<WorkspacePage> {
             height: 28,
             child: Row(
               children: [
-                T(
-                  '工作区变更',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: T(
+                            '工作区变更',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      small('${changes.length}'),
+                    ],
+                  ),
                 ),
-                SizedBox(width: 8),
-                small('${changes.length}'),
-                Spacer(),
                 ZButton(
                   icon: Icons.refresh,
                   height: 24,

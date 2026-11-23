@@ -136,6 +136,36 @@ void main() {
       expect((await git.branches(root)).where((b) => !b.remote).length, 2);
     },
   );
+  test('mirrored remote branches reuse main even with ambiguous refs', () async {
+    await write('a', 'initial');
+    await commit('initial');
+    for (final remote in ['GitHub', 'Gitee']) {
+      final bare = p.join(temp.path, '$remote.git');
+      await git.run(temp.path, ['init', '--bare', bare]);
+      await git.run(root, ['remote', 'add', remote, bare]);
+      await git.run(root, ['push', if (remote == 'GitHub') '-u', remote, 'main']);
+    }
+    await git.run(root, ['switch', '--track', '-c', 'Gitee/main', 'refs/remotes/Gitee/main']);
+    expect(await git.branch(root), 'Gitee/main');
+    expect((await git.counts(root)).$3, 'Gitee/main');
+    final list = await git.branches(root);
+    expect(list.where((b) => !b.remote).map((b) => b.name), unorderedEquals(['Gitee/main', 'main']));
+    final remotes = list.where((b) => b.remote);
+    expect(remotes.map((b) => b.name), unorderedEquals(['GitHub/main', 'Gitee/main']));
+    final gitee = remotes.singleWhere((b) => b.name == 'Gitee/main');
+    await git.switchBranch(root, gitee);
+    expect(await git.branch(root), 'main');
+    await git.run(root, ['branch', '-d', 'Gitee/main']);
+    await write('a', 'local edit');
+    for (final remote in remotes) {
+      await git.switchBranch(root, remote);
+      expect(await git.branch(root), 'main');
+      expect((await git.counts(root)).$3, 'GitHub/main');
+    }
+    expect((await git.branches(root)).where((b) => !b.remote).single.name, 'main');
+    expect(await File(p.join(root, 'a')).readAsString(), 'local edit');
+  });
+
   test(
     'unborn branch can rename but cannot create or delete current',
     () async {

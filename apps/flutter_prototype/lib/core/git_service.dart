@@ -310,9 +310,8 @@ class GitService {
   );
   Future<String> branch(String root) async => (await run(root, [
     'symbolic-ref',
-    '--short',
     'HEAD',
-  ], check: false)).out.trim();
+  ], check: false)).out.trim().replaceFirst(RegExp(r'^refs/heads/'), '');
   Future<String> head(String root) async => (await run(root, [
     'rev-parse',
     '--verify',

@@ -5,10 +5,37 @@ import 'package:zhixu_prototype/ui/image_preview.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zhixu_prototype/main.dart';
 import 'package:zhixu_prototype/ui/theme.dart';
+import 'package:zhixu_prototype/ui/localization.dart';
 import 'package:zhixu_prototype/core/git_service.dart';
 import 'package:zhixu_prototype/ui/code_editor.dart';
 
 void main() {
+  for (final language in ['中文', 'English']) {
+    for (final mode in [ThemeMode.light, ThemeMode.dark]) {
+      testWidgets('branch menu groups mirrored main branches: $language $mode', (tester) async {
+        tester.view.physicalSize = const Size(1280, 860);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        addTearDown(() {
+          uiLanguage = '中文';
+          appearance.value = ThemeMode.system;
+        });
+        await tester.pumpWidget(ZhixuPrototype(initialPath: '/demo', service: MirrorGit()));
+        await tester.pumpAndSettle();
+        uiLanguage = language;
+        appearance.value = mode;
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('main').first);
+        await tester.pumpAndSettle();
+        expect(find.text(language == 'English' ? 'Remote branches · 2' : '远程分支 · 2'), findsOneWidget);
+        expect(find.text('GitHub/main'), findsOneWidget);
+        expect(find.text('Gitee/main'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+      });
+    }
+  }
+
   testWidgets(
     'change badges align regardless of filename and checkbox remains easy to click',
     (tester) async {
@@ -219,4 +246,24 @@ class BadgeGit extends FakeGit {
     ),
     Change('nested/directory/deep/file.txt', '??'),
   ];
+}
+
+class MirrorGit extends FakeGit {
+  @override
+  Future<GitReply> run(
+    String root,
+    List<String> args, {
+    Map<String, String> env = const {},
+    String? input,
+    bool check = true,
+    Duration timeout = const Duration(seconds: 45),
+  }) async {
+    if (args.first == 'for-each-ref') {
+      return const GitReply(0,
+        'refs/heads/main\x00main\x00refs/remotes/GitHub/main\x00*\x00\n'
+        'refs/remotes/GitHub/main\x00GitHub/main\x00\x00 \x00\n'
+        'refs/remotes/Gitee/main\x00Gitee/main\x00\x00 \x00\n', '');
+    }
+    return super.run(root, args, env: env, input: input, check: check, timeout: timeout);
+  }
 }
