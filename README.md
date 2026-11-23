@@ -13,12 +13,18 @@
 | **macOS · M 系列芯片** | [DMG 安装包](https://gitee.com/zoulirise/zhixu/releases/download/v1.0.6/Zhixu-1.0.6-macOS-arm64.dmg) | [DMG 安装包](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.6/Zhixu-1.0.6-macOS-arm64.dmg) |
 | **Windows · x64（推荐安装版）** | [EXE 安装程序](https://gitee.com/zoulirise/zhixu/releases/download/v1.0.6/Zhixu-1.0.6-Windows-x64-Setup.exe) | [EXE 安装程序](https://github.com/zoulirise-dev/zhixu/releases/download/v1.0.6/Zhixu-1.0.6-Windows-x64-Setup.exe) |
 
-- **macOS**：macOS 14+、Apple Silicon（M 系列）。打开 DMG，将枝序拖入 Applications。应用与 DMG 均已使用 Developer ID 签名并通过 Apple 公证；暂不提供 Intel 安装包。
+- **macOS** 适用于 macOS 14 及以上的 Apple 芯片（M 系列）Mac。1.0.6 的应用和 DMG 均已使用 Developer ID 签名，本版未经 Apple 公证。
 - **Windows**：Windows 10/11 x64，需安装 Git for Windows。EXE 支持记住安装位置、覆盖升级与卸载。无需安装 Flutter 或 Visual Studio。Windows 包暂未做代码签名，可能显示发布者未知。
 - **认证**：优先使用电脑已有 Git 认证；Windows 的 GitHub 网页登录需要 GitHub CLI。
 - **升级**：升级前保存编辑并退出枝序。本应用自 1.0.4 起使用 Flutter 实现，从原生 macOS 1.0.3 升级后需重新添加项目；仓库内容和系统 Git 配置不会被清除。
 
 更新说明：[v1.0.6](docs/releases/v1.0.6.md)。历史版本：[Gitee 发行版](https://gitee.com/zoulirise/zhixu/releases) · [GitHub 发行版](https://github.com/zoulirise-dev/zhixu/releases)。原生 macOS 1.0.3 仍可从历史版本下载。
+
+### macOS 首次打开枝序
+
+1. 打开 DMG，将「枝序」拖入「应用程序」，再从「应用程序」双击打开。
+2. 如果系统提示 Apple 无法检查「枝序」是否包含恶意软件，请先关闭提示，并确认安装包来自本项目的 GitHub 或 Gitee 发行页。可以用同一发行版的 `.sha256` 文件核对下载内容。
+3. 确认来源后，打开「系统设置」→「隐私与安全性」，向下找到刚被阻止的「枝序」，点击「仍要打开」，按系统提示确认。之后即可像平常一样双击打开。[Apple 首次打开说明](https://support.apple.com/zh-cn/102445)
 
 ## 少记命令，把注意力放在代码上
 
@@ -46,7 +52,7 @@
 
 | 平台 | 当前实现 | 安装形式 |
 | --- | --- | --- |
-| macOS Apple Silicon | Flutter 1.0.6 | 签名公证 DMG |
+| macOS Apple Silicon | Flutter 1.0.6 | Developer ID 签名 DMG（未经 Apple 公证） |
 | Windows x64 | Flutter 1.0.6 | EXE 安装版 |
 | macOS 原生版 | SwiftUI/AppKit 1.0.3，保留源码与历史发行版 | 历史 DMG |
 
